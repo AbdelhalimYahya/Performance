@@ -1,0 +1,39 @@
+{
+  "name": "perf-fundamentals-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js 14 performance measurement and profiling project",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "profile": "next build --profile",
+    "analyze": "ANALYZE=true next build",
+    "lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-reports --chrome-flags=\"--headless\"",
+    "perf:report": "node scripts/perf-report.mjs"
+  },
+  "dependencies": {
+    "@next/bundle-analyzer": "^14.2.18",
+    "next": "^14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.33.5",
+    "web-vitals": "^4.2.0"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.14.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.18",
+    "lighthouse": "^12.2.1",
+    "prettier": "^3.4.1",
+    "typescript": "^5.6.3",
+    "webpack-bundle-analyzer": "^4.10.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
