@@ -1,0 +1,110 @@
+// Prisma schema — optimized for database performance demos
+// Covers: indexing, relations, cursor pagination, materialized views
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Core Models ────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  category    String   @db.VarChar(100)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  reviews    Review[]
+  orderItems OrderItem[]
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // Composite index: category + price (most common filter/sort combo)
+  @@index([category, price], name: "idx_products_category_price")
+  // Cursor pagination: supports WHERE id > cursor ORDER BY id
+  @@index([id], name: "idx_products_id_cursor")
+  // Hot path: active products filtered by category
+  @@index([isActive, category], name: "idx_products_active_category")
+  // Time-based queries: recent products
+  @@index([createdAt], name: "idx_products_created_at")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique @db.VarChar(255)
+  name      String   @db.VarChar(255)
+  role      String   @default("user") @db.VarChar(50)
+  createdAt DateTime @default(now())
+
+  // Relations
+  reviews Review[]
+  orders  Order[]
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // Role-based queries (admin dashboards)
+  @@index([role], name: "idx_users_role")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int      @db.SmallInt
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // N+1 prevention: load reviews per product efficiently
+  @@index([productId, createdAt], name: "idx_reviews_product_created")
+  // User review history
+  @@index([userId, createdAt], name: "idx_reviews_user_created")
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  status    String   @default("pending") @db.VarChar(50)
+  total     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // User order history
+  @@index([userId, createdAt], name: "idx_orders_user_created")
+  // Status filtering (pending, shipped, etc.)
+  @@index([status, createdAt], name: "idx_orders_status_created")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // Order items lookup
+  @@index([orderId], name: "idx_order_items_order_id")
+  // Product sales analysis
+  @@index([productId], name: "idx_order_items_product_id")
+}

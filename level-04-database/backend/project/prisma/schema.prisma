@@ -1,0 +1,92 @@
+// Prisma schema — optimized for database performance demos
+// Covers: indexing, relations, cursor pagination, materialized views
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Core Models ────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  category    String   @db.VarChar(100)
+  sellerId    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  seller   User     @relation(fields: [sellerId], references: [id])
+  reviews  Review[]
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // Composite index: category + price (most common filter/sort combo)
+  // Selectivity rule: category first (fewer distinct values) then price (range queries)
+  @@index([category, price], name: "idx_products_category_price")
+
+  // Cursor pagination: supports WHERE id > cursor ORDER BY id
+  @@index([id], name: "idx_products_id_cursor")
+
+  // Covering index for list queries: seller dashboard
+  @@index([sellerId, createdAt], name: "idx_products_seller_created")
+
+  // Category aggregation queries
+  @@index([category], name: "idx_products_category_agg")
+
+  // Active product hot path
+  @@index([isActive, category, price], name: "idx_products_active_cat_price")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  role      String   @default("user") @db.VarChar(50)
+  rating    Decimal  @default(0) @db.Decimal(3, 2)
+  createdAt DateTime @default(now())
+
+  products Product[]
+  reviews  Review[]
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // Role-based queries (admin dashboards)
+  @@index([role, rating], name: "idx_users_role_rating")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  rating    Int      @db.SmallInt
+  productId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  // ─── Performance Indexes ────────────────────────────────────
+  // N+1 fix: load reviews per product efficiently
+  @@index([productId, createdAt], name: "idx_reviews_product_created")
+  // User review history
+  @@index([userId, createdAt], name: "idx_reviews_user_created")
+}
+
+// ─── Materialized View ─────────────────────────────────────────
+// Queries the materialized view as a read-only model
+model ProductStats {
+  id           Int    @id @default()
+  category     String
+  productCount Int
+  avgPrice     Decimal
+  totalStock   Int
+
+  @@map("mv_product_stats")
+}
