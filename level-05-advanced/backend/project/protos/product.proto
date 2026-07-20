@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package products;
+
+/**
+ * PRODUCT SERVICE — gRPC definition
+ *
+ * Defines 4 RPCs for product operations:
+ * - GetProduct: unary RPC (single request → single response)
+ * - ListProducts: unary RPC with pagination
+ * - CreateProduct: unary RPC for mutations
+ * - StreamProducts: server-side streaming (one request → stream of responses)
+ *
+ * Why protobuf over JSON:
+ * - Binary encoding: 3-5x smaller payloads
+ * - Schema enforcement: type safety at compile time
+ * - HTTP/2 multiplexing: multiple requests over single connection
+ * - Header compression: HPACK reduces repeated metadata
+ *
+ * Scalar type mapping:
+ * - string → string (UTF-8)
+ * - int32 → number (32-bit signed)
+ * - float → number (32-bit IEEE 754)
+ * - bool → boolean
+ * - repeated → Array
+ */
+
+service ProductService {
+  // Unary RPC: single product lookup
+  rpc GetProduct (ProductRequest) returns (ProductResponse);
+
+  // Unary RPC: paginated list with category filter
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+
+  // Unary RPC: create product
+  rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
+
+  // Server streaming RPC: live feed of products
+  rpc StreamProducts (StreamProductsRequest) returns (stream ProductResponse);
+}
+
+message ProductRequest {
+  string id = 1;
+}
+
+message ProductResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  float price = 4;
+  int32 stock = 5;
+  string category = 6;
+  bool available = 7;
+  int64 created_at = 8;
+}
+
+message ListProductsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string category = 3;
+}
+
+message ListProductsResponse {
+  repeated ProductResponse products = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  float price = 3;
+  int32 stock = 4;
+  string category = 5;
+}
+
+message StreamProductsRequest {
+  string category = 1;
+  int32 count = 2;
+}

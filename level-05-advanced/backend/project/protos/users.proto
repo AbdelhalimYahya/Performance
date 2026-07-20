@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package users;
+
+/**
+ * USER SERVICE — gRPC definition
+ *
+ * Protocol Buffers define the service contract.
+ * Binary encoding: 3-5x smaller than JSON payloads.
+ * HTTP/2 multiplexing: multiple requests over single connection.
+ * Header compression: HPACK reduces repeated metadata.
+ */
+service UserService {
+  rpc GetUser (GetUserRequest) returns (UserResponse);
+  rpc ListUsers (ListUsersRequest) returns (stream UserResponse);
+  rpc ProcessEvents (stream EventRequest) returns (EventResponse);
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int64 created_at = 4;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message EventRequest {
+  string event_type = 1;
+  string payload = 2;
+  int64 timestamp = 3;
+}
+
+message EventResponse {
+  bool acknowledged = 1;
+  int64 processed_count = 2;
+}
