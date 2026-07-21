@@ -1,0 +1,70 @@
+@startuml request-flow
+!theme plain
+
+title Request Flow — Full Stack Performance Pipeline
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+actor User
+participant "Browser" as B
+participant "Next.js\nFrontend" as FE
+participant "NestJS\nBackend" as BE
+database "Redis\nCache" as REDIS
+database "PostgreSQL" as PG
+participant "Jaeger" as JAEGER
+participant "Prometheus" as PROM
+participant "RUM\nCollector" as RUM
+
+== User Request ==
+User -> B : Click link to /products
+B -> FE : HTTP GET /products
+
+== Frontend Processing ==
+activate FE
+FE -> FE : React Server Component render
+FE -> BE : fetch('/api/products')
+
+== Backend Processing ==
+activate BE
+BE -> BE : TelemetryInterceptor creates span
+BE -> BE : Record http_request_duration
+
+BE -> REDIS : GET cache:products
+alt Cache Hit
+  REDIS --> BE : cached JSON
+  BE -> BE : recordCacheAccess(hit)
+else Cache Miss
+  REDIS --> BE : null
+  BE -> BE : recordCacheAccess(miss)
+  BE -> PG : SELECT * FROM products
+  activate PG
+  PG --> BE : query results
+  deactivate PG
+  BE -> BE : recordDbQuery(15ms)
+  BE -> REDIS : SET cache:products EX 300
+end
+
+BE --> FE : JSON response
+deactivate BE
+
+== Response ==
+FE --> B : HTML/JSON response
+deactivate FE
+
+== Post-Response ==
+B -> B : measureCoreWebVitals()
+B -> RUM : sendBeacon(/api/rum)
+activate RUM
+RUM --> RUM : store metrics
+deactivate RUM
+B -> B : PerformanceObserver fires
+
+== Observability ==
+FE -> JAEGER : span export (BatchSpanProcessor)
+BE -> JAEGER : span export
+BE -> PROM : /metrics scrape
+RUM -> RUM : aggregate + flush
+
+@enduml

@@ -1,0 +1,68 @@
+@startuml observability-flow
+!theme plain
+
+title Observability Pipeline — Data Flow Diagram
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam activityFontSize 11
+
+|#F3E8FF| Traces |
+|#E8F5E9| Metrics |
+|#FFF3E0| Logs |
+|#E3F2FD| RUM |
+
+|Traces|
+start
+:HTTP Request arrives;
+:NestJS Interceptor\ncaptures start time;
+
+|Metrics|
+:increment http_requests_total;
+:start event loop timer\n(tick every 100ms);
+
+|Traces|
+:OpenTelemetry Span created;
+:Span attributes set\n(http.method, http.route);
+
+:Execute request handler;
+
+if (Cache hit?) then (yes)
+  |Metrics|
+  :increment cache_hits_total\n{result="hit"};
+else (no)
+  |Metrics|
+  :increment cache_hits_total\n{result="miss"};
+  :record db_query_duration;
+endif
+
+|Traces|
+:Span ends with status code;
+:BatchSpanProcessor\nbuffers spans;
+
+|Logs|
+:Pino logger writes\n{traceId, spanId, ...};
+
+|Metrics|
+:Record http_request_duration\nin histogram;
+:Update event_loop_lag gauge;
+:Update process_heap_used gauge;
+
+|Traces|
+:Export to Jaeger\nvia OTLP HTTP;
+
+|Metrics|
+:Prometheus scrapes\n/metrics endpoint every 15s;
+
+|RUM|
+:Browser sends Core Web Vitals\nvia sendBeacon to /api/rum;
+:RUM API stores metrics;
+:Dashboard queries /api/rum/stats;
+
+|Metrics|
+:Grafana queries Prometheus;
+:Dashboard panels update;
+
+stop
+
+@enduml

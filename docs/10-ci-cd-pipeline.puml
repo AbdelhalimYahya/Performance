@@ -1,0 +1,73 @@
+@startuml ci-cd-pipeline
+!theme plain
+
+title CI/CD Pipeline — Performance Gates
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam activityFontSize 11
+
+|#F3E8FF| Developer |
+|#E3F2FD| GitHub Actions |
+|#FFF3E0| Performance Gates |
+|#E8F5E9| Deploy |
+
+|Developer|
+start
+:git push\nfeature branch;
+
+|GitHub Actions|
+fork
+:Install dependencies\n(npm ci);
+:Build project\n(npm run build);
+
+|Performance Gates|
+split
+  :Bundle Size Check\n(size-limit);
+  if (Within budget?) then (yes)
+    :Pass;
+  else (no)
+    #FF6B6B:Fail — post PR comment;
+    stop
+  endif
+split again
+  :Lighthouse CI\n(3 runs per route);
+  if (Score >= 85?) then (yes)
+    :Pass;
+  else (no)
+    #FF6B6B:Fail — upload artifacts;
+    stop
+  endif
+split again
+  :Unit Tests;
+  if (All pass?) then (yes)
+    :Pass;
+  else (no)
+    #FF6B6B:Fail;
+    stop
+  endif
+end split
+
+|GitHub Actions|
+:All gates passed;
+
+|Deploy|
+:Deploy to production;
+
+|Performance Gates|
+:RUM starts collecting\nreal user metrics;
+:Prometheus starts scraping;
+:Grafana dashboard updates;
+
+|Developer|
+:Review RUM data\nafter 24 hours;
+if (Metrics within budget?) then (yes)
+  :Ship it;
+else (no)
+  :Open follow-up issue;
+  :Investigate regression;
+endif
+
+stop
+
+@enduml

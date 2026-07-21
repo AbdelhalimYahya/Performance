@@ -1,0 +1,72 @@
+@startuml worker-threads
+!theme plain
+
+title Worker Threads & Queue Architecture — Level 05
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+participant "NestJS\nMain Thread" as MAIN
+participant "Piscina\nWorker Pool" as POOL
+participant "Worker\nThread 1" as W1
+participant "Worker\nThread 2" as W2
+participant "Worker\nThread 3" as W3
+participant "Worker\nThread 4" as W4
+database "Bull Queue\n(Redis)" as QUEUE
+participant "Email\nProcessor" as EMAIL
+participant "Report\nProcessor" as REPORT
+participant "Image\nProcessor" as IMG
+
+== CPU-Bound Tasks (Worker Pool) ==
+
+MAIN -> POOL : execute("sortLargeArray", data)
+POOL -> W1 : transfer data via SharedArrayBuffer
+activate W1
+W1 --> POOL : sorted array
+deactivate W1
+POOL --> MAIN : result
+
+MAIN -> POOL : execute("hashPassword", data)
+POOL -> W2 : transfer data
+activate W2
+W2 --> POOL : hashed password
+deactivate W2
+POOL --> MAIN : result
+
+== Queue-Based Tasks (Bull Queue) ==
+
+MAIN -> QUEUE : add email job
+QUEUE -> EMAIL : process job
+activate EMAIL
+EMAIL --> QUEUE : job complete
+deactivate EMAIL
+
+MAIN -> QUEUE : add report job
+QUEUE -> REPORT : process job
+activate REPORT
+REPORT --> QUEUE : job complete
+deactivate REPORT
+
+MAIN -> QUEUE : add image processing job
+QUEUE -> IMG : process job
+activate IMG
+IMG --> QUEUE : job complete
+deactivate IMG
+
+== Monitoring ==
+
+note over MAIN, W4
+  Worker Pool Stats:
+  - Active threads: 4
+  - Pending tasks: 2
+  - Completed tasks: 1,247
+  - Queue utilization: 65%
+
+  Bull Queue Stats:
+  - emails: waiting 0, active 1, completed 5,432
+  - reports: waiting 3, active 0, completed 892
+  - image-processing: waiting 12, active 2, completed 3,210
+end note
+
+@enduml

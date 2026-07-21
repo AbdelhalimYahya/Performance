@@ -1,0 +1,93 @@
+@startuml learning-path
+!theme plain
+
+title Learning Path — Skill Progression Map
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam activityFontSize 11
+
+|Frontend Skills|
+start
+:Level 01\nWeb Vitals\n(LCP, INP, CLS);
+note right
+  Learn to measure
+  before you optimize
+end note
+
+:Level 02\nRendering Patterns\n(SSR, CSR, Streaming);
+note right
+  Understand where
+  time is spent
+end note
+
+:Level 03\nCaching Strategies\n(React Query, SWR, SW);
+note right
+  Highest-impact
+  optimization
+end note
+
+:Level 04\nData Patterns\n(Infinite Scroll, Optimistic UI);
+note right
+  Keep UI responsive
+  under data load
+end note
+
+:Level 05\nAdvanced Patterns\n(WASM, Code Splitting);
+note right
+  Push the boundaries
+  of the browser
+end note
+
+:Level 06\nProduction Monitoring\n(Lighthouse CI, RUM);
+note right
+  Ship with confidence
+  and visibility
+end note
+
+|Backend Skills|
+:Level 01\nBenchmarking\n(autocannon, Pino);
+note left
+  Establish baselines
+  with numbers
+end note
+
+:Level 02\nResponse Patterns\n(Streaming, JSON);
+note left
+  Optimize the
+  wire format
+end note
+
+:Level 03\nCache Architecture\n(Redis, HTTP Headers);
+note left
+  Cache-aside, CDN,
+  invalidation
+end note
+
+:Level 04\nDatabase Mastery\n(N+1, Indexes, Pagination);
+note left
+  Where most backend
+  latency lives
+end note
+
+:Level 05\nConcurrency\n(Workers, Cluster, gRPC);
+note left
+  Scale beyond
+  single-thread
+end note
+
+:Level 06\nObservability\n(OTel, Prometheus, Jaeger);
+note left
+  See everything
+  in production
+end note
+
+:Full Stack\nProduction Ready;
+note right
+  Complete performance
+  engineering skill set
+end note
+
+stop
+
+@enduml

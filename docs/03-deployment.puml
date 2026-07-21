@@ -1,0 +1,58 @@
+@startuml deployment
+!theme plain
+
+title Deployment Architecture — Level 06 Production Stack
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam nodeStyle rectangle
+
+cloud "GitHub" as GH {
+  node "GitHub Actions" as GHA {
+    artifact "Lighthouse CI\n(lhci autorun)" as LHCI_ACT
+    artifact "Bundle Size Check\n(size-limit)" as SIZE_ACT
+    artifact "Unit Tests" as TEST_ACT
+  }
+}
+
+node "Production Server" as PROD {
+  node "Next.js Frontend\n(Port 3000)" as FE {
+    component "RUM Collector\n(src/lib/rum.ts)" as RUM
+    component "CWV Dashboard\n(/dashboard)" as DASH
+    component "Error Boundaries\n(boundaries/)" as ERR
+    component "Lighthouse Budget\n(perf-budget.ts)" as BUDGET
+  }
+
+  node "NestJS Backend\n(Port 3000)" as BE {
+    component "OpenTelemetry\n(tracing.ts)" as OTel
+    component "Prometheus Metrics\n(/metrics:9464)" as METRICS
+    component "Health Check\n(/health)" as HEALTH
+    component "CPU Profiler\n(profiling/)" as PROF
+    component "Memory Monitor\n(memory/)" as MEM
+  }
+}
+
+database "PostgreSQL 15" as PG
+database "Redis 7" as REDIS
+
+node "Observability Stack" as OBS {
+  node "Prometheus\n(Port 9090)" as PROM
+  node "Grafana\n(Port 3001)" as GRAF
+  node "Jaeger\n(Port 16686)" as JAEGER
+}
+
+' Data flows
+FE --> OTel : traces
+BE --> PROM : metrics scrape
+BE --> JAEGER : trace export
+GRAF --> PROM : query
+GHA --> LHCI_ACT : PR trigger
+GHA --> SIZE_ACT : PR trigger
+FE --> PG : queries
+BE --> PG : queries
+BE --> REDIS : cache
+OTel --> JAEGER : OTLP export
+MEM --> BE : memory alerts
+PROF --> BE : CPU profiles
+
+@enduml

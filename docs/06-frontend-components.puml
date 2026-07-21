@@ -1,0 +1,107 @@
+@startuml frontend-components
+!theme plain
+
+title Frontend Component Architecture — Next.js App Router
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam componentStyle rectangle
+
+package "Level 01 — Fundamentals" as L01 {
+  [Web Vitals Dashboard\n/page.tsx] as L01_PAGE
+  [useVitals hook\nsrc/lib/vitals.ts] as L01_HOOK
+  [Render Test\n(Fiber stress test)] as L01_RENDER
+  [API Route\n/api/data] as L01_API
+}
+
+package "Level 02 — Rendering" as L02 {
+  [CSR vs SSR Comparison\n/comparison] as L02_CMP
+  [CSRColumn component] as L02_CSR
+  [PerformanceMeter component] as L02_METER
+  [Streaming Demo\n/comparison/streaming] as L02_STREAM
+  [Virtual List\n/virtual-list] as L02_VIRT
+  [React Profiler Demo\ncomponents/render-demo/] as L02_PROF
+}
+
+package "Level 03 — Caching" as L03 {
+  [Cache Demo Dashboard\n/cache-demo] as L03_PAGE
+  [useProducts hook\nReact Query integration] as L03_RQ
+  [useSWR Patterns hook\n7 advanced patterns] as L03_SWR
+  [Service Worker\nsw/service-worker.ts] as L03_SW
+  [useServiceWorker hook] as L03_SW_HOOK
+  [QueryProvider\nProviders wrapper] as L03_QP
+}
+
+package "Level 04 — Database & API" as L04 {
+  [Infinite Scroll\n/infinite-scroll] as L04_INF
+  [useInfiniteProducts hook] as L04_INF_HOOK
+  [InfiniteProductList component] as L04_INF_LIST
+  [Pagination Demo\n/pagination-demo] as L04_PAGE
+  [usePagination hook] as L04_PAG_HOOK
+  [Optimistic UI Demo\n/optimistic-ui] as L04_OPT
+  [useOptimisticMutation hook] as L04_OPT_HOOK
+  [Prefetch Demo\n/prefetch-demo] as L04_PRE
+}
+
+package "Level 05 — Advanced" as L05 {
+  [Code Splitting Demo\n/splitting] as L05_SPLIT
+  [React.lazy() Lazy Components\ncomponents/lazy/] as L05_LAZY
+  [WASM Demo\n/wasm-demo] as L05_WASM
+  [image-processor.ts\nWASM + JS fallback] as L05_WASM_MOD
+  [Tree Shaking Demo\n/tree-shaking-demo] as L05_TREE
+  [Bundle Analyzer\nscripts/bundle-analyze.ts] as L05_BUNDLE
+}
+
+package "Level 06 — Production" as L06 {
+  [Lighthouse CI\n.github/workflows/] as L06_LHCI
+  [RUM System\nsrc/lib/rum.ts] as L06_RUM
+  [RUM Observers\nsrc/lib/rum-observer.ts] as L06_OBS
+  [CWV Dashboard\n/dashboard/] as L06_DASH
+  [VitalsOverview component] as L06_VITALS
+  [TrendChart component\n(SVG line chart)] as L06_TREND
+  [DeviceBreakdown component] as L06_DEVICE
+  [PageBreakdown component] as L06_PAGE_TBL
+  [Error Boundaries\nboundaries/] as L06_ERR
+  [withErrorBoundary HOC] as L06_HOC
+  [RumProvider\nsrc/providers/] as L06_RUM_PROV
+  [Performance Budget\nscripts/perf-budget.ts] as L06_BUDGET
+  [RUM API\n/api/rum/route.ts] as L06_RUM_API
+  [Stats API\n/api/rum/stats/route.ts] as L06_STATS_API
+}
+
+' Internal dependencies
+L01_HOOK --> L01_PAGE
+L01_RENDER --> L01_PAGE
+L01_API --> L01_PAGE
+
+L02_CSR --> L02_CMP
+L02_METER --> L02_CMP
+L02_PROF --> L02_PAGE
+
+L03_RQ --> L03_PAGE
+L03_SWR --> L03_PAGE
+L03_SW --> L03_SW_HOOK
+L03_QP --> L03_PAGE
+
+L04_INF_HOOK --> L04_INF
+L04_INF_LIST --> L04_INF
+L04_PAG_HOOK --> L04_PAGE
+L04_OPT_HOOK --> L04_OPT
+L04_PRE --> L04_PAGE
+
+L05_LAZY --> L05_SPLIT
+L05_WASM_MOD --> L05_WASM
+L05_BUNDLE --> L05_TREE
+
+L06_OBS --> L06_RUM
+L06_RUM_PROV --> L06_RUM
+L06_RUM --> L06_RUM_API
+L06_DASH --> L06_STATS_API
+L06_VITALS --> L06_DASH
+L06_TREND --> L06_DASH
+L06_DEVICE --> L06_DASH
+L06_PAGE_TBL --> L06_DASH
+L06_HOC --> L06_ERR
+L06_LHCI --> L06_BUDGET
+
+@enduml

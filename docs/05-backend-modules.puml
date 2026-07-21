@@ -1,0 +1,188 @@
+@startuml backend-modules
+!theme plain
+
+title Backend Module Architecture — NestJS Modules
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+
+' ─── Level 01: Fundamentals ──────────────────────────────────
+package "Level 01 — Profiling Interceptor" as L01 {
+  class ProfilingInterceptor {
+    - circularBuffer: RequestMetric[]
+    - intercept(context, next): Observable
+    - getPercentile(data, p): number
+    + getStats(): BufferStats
+  }
+  class StatsController {
+    + getStats(): BufferStats
+  }
+  ProfilingInterceptor --> StatsController : exposes
+}
+
+' ─── Level 03: Caching ───────────────────────────────────────
+package "Level 03 — Cache Module" as L03 {
+  class CacheService {
+    - redis: Redis
+    - get<T>(key): Promise<T>
+    - set<T>(key, value, ttl): Promise<void>
+    - del(pattern): Promise<void>
+  }
+  class CacheInterceptor {
+    - cacheService: CacheService
+    - intercept(context, next): Observable
+    + trackCacheAccess(cacheName, hit): void
+  }
+  class ProductsCachedService {
+    - cacheService: CacheService
+    + findAll(): Promise<Product[]>
+    + findById(id): Promise<Product>
+  }
+  class CacheWarmingService {
+    - warmCache(): Promise<void>
+  }
+  CacheInterceptor --> CacheService
+  ProductsCachedService --> CacheService
+  CacheWarmingService --> CacheService
+}
+
+' ─── Level 04: Database ──────────────────────────────────────
+package "Level 04 — Database Optimization" as L04 {
+  class QueryOptimizerService {
+    + analyzeQuery(sql): QueryPlan
+    + suggestIndex(table): IndexRecommendation
+  }
+  class DataLoaderModule {
+    + productLoader: DataLoader
+    + reviewLoader: DataLoader
+  }
+  class PaginationService {
+    + cursorPaginate(table, cursor, limit): PaginatedResult
+    + offsetPaginate(table, page, limit): PaginatedResult
+  }
+  class NPlusOneDetector {
+    - detectNPlusOne(context): boolean
+  }
+  DataLoaderModule --> NPlusOneDetector
+}
+
+' ─── Level 05: Advanced ──────────────────────────────────────
+package "Level 05 — Worker Pool" as L05A {
+  class WorkerPoolService {
+    - pool: Piscina
+    + execute(task, data): Promise<Result>
+    + getStats(): PoolStats
+  }
+  class CpuIntensiveWorker {
+    + sortLargeArray(data): number[]
+    + hashPassword(password): string
+    + generateReport(data): Report
+  }
+  WorkerPoolService --> CpuIntensiveWorker : spawns
+}
+
+package "Level 05 — Queue Module" as L05B {
+  class QueueModule {
+    + emailQueue: Queue
+    + reportQueue: Queue
+    + imageQueue: Queue
+  }
+  class EmailProcessor {
+    + handle(job): Promise<void>
+  }
+  class ReportProcessor {
+    + handle(job): Promise<Report>
+  }
+  class QueueMonitorService {
+    + getMetrics(): QueueMetrics
+  }
+  QueueModule --> EmailProcessor
+  QueueModule --> ReportProcessor
+  QueueModule --> QueueMonitorService
+}
+
+package "Level 05 — Stream Processing" as L05C {
+  class StreamPipelineService {
+    + processCsv(filePath): Promise<Stats>
+  }
+  class CsvParserTransform {
+    - transform(chunk, encoding, callback): void
+  }
+  class DataValidatorTransform {
+    - transform(chunk, encoding, callback): void
+  }
+  class DbInserterWritable {
+    - _write(chunk, encoding, callback): void
+  }
+  StreamPipelineService --> CsvParserTransform
+  StreamPipelineService --> DataValidatorTransform
+  StreamPipelineService --> DbInserterWritable
+}
+
+package "Level 05 — gRPC" as L05D {
+  class ProductGrpcController {
+    + findOne(request): Product
+    + findAll(request): Stream
+  }
+  class GrpcClientService {
+    + callMethod(method, data): Promise<Result>
+  }
+  ProductGrpcController --> GrpcClientService
+}
+
+' ─── Level 06: Production ────────────────────────────────────
+package "Level 06 — Telemetry" as L06A {
+  class TelemetryModule {
+    + TRACER: InjectionToken
+  }
+  class TelemetryInterceptor {
+    - intercept(context, next): Observable
+    - createSpan(method, route): Span
+  }
+  class MetricsService {
+    + httpRequestDuration: Histogram
+    + httpRequestTotal: Counter
+    + dbQueryDuration: Histogram
+    + cacheHitsTotal: Counter
+    + eventLoopLagSeconds: Gauge
+    + recordHttpRequest(...): void
+    + recordDbQuery(...): void
+    + recordCacheAccess(...): void
+  }
+  TelemetryModule --> TelemetryInterceptor
+  TelemetryModule --> MetricsService
+}
+
+package "Level 06 — Memory" as L06B {
+  class MemoryMonitorService {
+    - buffer: MemorySnapshot[]
+    + collectSnapshot(): void
+    + detectLeak(): LeakAnalysis
+  }
+  class HeapSnapshotService {
+    + takeSnapshot(reason): string
+    + compressSnapshot(path): string
+    + cleanupOldSnapshots(): void
+  }
+  MemoryMonitorService --> HeapSnapshotService : triggers
+}
+
+package "Level 06 — Profiling" as L06C {
+  class CpuProfilerService {
+    + startProfiling(ms, label): string
+    + isProfilerActive(): boolean
+    + getLastProfileSummary(): ProfileSummary
+  }
+  class HealthController {
+    + getHealth(): HealthResponse
+  }
+}
+
+' ─── Cross-module dependencies ───────────────────────────────
+MetricsService ..> TelemetryInterceptor : provides metrics
+CacheInterceptor ..> MetricsService : records cache hits
+ProfilingInterceptor ..> MetricsService : records HTTP duration
+
+@enduml

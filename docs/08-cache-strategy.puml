@@ -1,0 +1,73 @@
+@startuml cache-strategy
+!theme plain
+
+title Caching Strategy — Level 03 Architecture
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+
+actor Client
+participant "Next.js\nFrontend" as FE
+participant "React Query\nCache" as RQ
+participant "Service Worker\n(Workbox)" as SW
+participant "NestJS\nBackend" as BE
+participant "Cache\nInterceptor" as CI
+database "Redis" as REDIS
+database "PostgreSQL" as PG
+
+== Frontend Caching Layers ==
+
+Client -> FE : Navigate to /products
+FE -> RQ : useProducts() query
+
+alt RQ Cache Hit (stale-while-revalidate)
+  RQ --> FE : return cached data
+  RQ -> BE : background revalidation
+else RQ Cache Miss
+  FE -> BE : GET /api/products
+end
+
+== Backend Caching Layers ==
+
+BE -> CI : intercept request
+CI -> REDIS : GET cache:products
+
+alt Redis Hit
+  REDIS --> CI : cached JSON
+  CI -> CI : recordCacheAccess("redis", hit)
+  CI --> FE : return cached response
+else Redis Miss
+  REDIS --> CI : null
+  CI -> CI : recordCacheAccess("redis", miss)
+  CI -> PG : SELECT * FROM products
+  PG --> CI : query results
+  CI -> REDIS : SET cache:products EX 300
+  CI --> FE : return fresh response
+end
+
+== Service Worker Caching ==
+
+FE -> SW : Cache-first for static assets
+SW -> SW : Check Cache Storage
+alt SW Cache Hit
+  SW --> FE : serve from cache
+else SW Cache Miss
+  SW -> BE : fetch from network
+  BE --> SW : response
+  SW -> SW : store in Cache Storage
+  SW --> FE : serve response
+end
+
+== HTTP Cache Headers ==
+
+FE -> BE : GET /api/products/1
+BE -> BE : Set Cache-Control: max-age=300
+BE -> BE : Set ETag: "abc123"
+BE --> FE : 200 + headers
+
+FE -> BE : GET /api/products/1\nIf-None-Match: "abc123"
+BE -> BE : Compare ETag
+BE --> FE : 304 Not Modified
+
+@enduml

@@ -1,0 +1,68 @@
+@startuml database-optimization
+!theme plain
+
+title Database Optimization — Level 04 Patterns
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+
+package "N+1 Query Detection" as N1 {
+  component "NPlusOneDetector\n(Interceptor)" as DET
+  component "DataLoader\n(Product + Review)" as DL
+  component "Prisma Client" as PRISMA
+
+  DET --> DL : detects pattern
+  DL --> PRISMA : batches queries
+}
+
+package "Pagination Strategies" as PAG {
+  component "Offset Pagination\n(page/limit)" as OFFSET
+  component "Cursor Pagination\n(cursor/limit)" as CURSOR
+  component "Pagination Service" as PAG_SVC
+
+  PAG_SVC --> OFFSET
+  PAG_SVC --> CURSOR
+}
+
+package "Index Optimization" as IDX {
+  component "Index Advisor\nService" as ADVISOR
+  component "Query Analyzer" as QANALYZE
+  component "Migration SQL\n(10 indexes)" as MIGRATE
+
+  ADVISOR --> QANALYZE : analyzes plans
+  ADVISOR --> MIGRATE : generates SQL
+}
+
+package "Replication & Bulk" as REPL {
+  component "Read Replicas\n(Prisma)" as REPLICA
+  component "Bulk Operations\n(createMany)" as BULK
+  component "Connection Pool\nMonitor" as POOL
+}
+
+' Relationships
+N1 ..> PAG : use after fixing N+1
+PAG ..> IDX : optimize after pagination
+IDX ..> REPL : scale after optimization
+
+note right of DET
+  Interceptor counts queries
+  per request. If count > 3,
+  logs a warning with the
+  query pattern.
+end note
+
+note right of CURSOR
+  Cursor stays fast at 10M rows.
+  Offset degrades linearly.
+  Benchmark: cursor 12ms vs
+  offset 850ms at page 10000.
+end note
+
+note right of ADVISOR
+  Analyzes pg_stat_statements,
+  suggests indexes based on
+  seq scan ratio and
+  mean execution time.
+end note
+
+@enduml

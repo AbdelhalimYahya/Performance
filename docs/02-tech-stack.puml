@@ -1,0 +1,83 @@
+@startuml tech-stack
+!theme plain
+
+title Tech Stack — Component Diagram
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam componentStyle rectangle
+skinparam packageBorderColor #666
+
+package "Frontend Runtime" as FRT {
+  [React 18] as REACT
+  [Next.js 14\nApp Router] as NEXT
+  [TypeScript 5] as TS
+}
+
+package "Frontend Tooling" as FTOOL {
+  [Webpack] as WEBPACK
+  [@next/bundle-analyzer] as BUNDLE_ANALYZER
+  [source-map-explorer] as SRC_MAP
+  [size-limit] as SIZE_LIMIT
+  [Workbox] as WORKBOX
+}
+
+package "Frontend Monitoring" as FMON {
+  [web-vitals] as WEB_VITALS
+  [Lighthouse] as LIGHTHOUSE
+  [@lhci/cli] as LHCI
+  [PerformanceObserver API] as PERF_OBS
+}
+
+package "Backend Runtime" as BRT {
+  [Node.js 20+] as NODE
+  [NestJS 10] as NEST
+  [Express 4] as EXPRESS
+}
+
+package "Backend Data" as BDATA {
+  [PostgreSQL 15] as PG
+  [Prisma] as PRISMA
+  [Redis 7] as REDIS
+  [ioredis] as IOREDIS
+  [Bull Queue] as BULL
+}
+
+package "Backend Monitoring" as BMON {
+  [OpenTelemetry] as OTel
+  [prom-client] as PROM
+  [Jaeger] as JAEGER
+  [Grafana] as GRAFANA
+  [Prometheus] as PROMETHEUS
+}
+
+package "Developer Tooling" as DTOOL {
+  [clinic.js] as CLINIC
+  [autocannon] as AUTOCANNON
+  [Piscina] as PISCINA
+  [DataLoader] as DATALOADER
+  [pino] as PINO
+}
+
+package "CI/CD" as CICD {
+  [GitHub Actions] as GH_ACTIONS
+  [Docker Compose] as DOCKER
+}
+
+' Relationships
+NEXT --> REACT
+NEXT --> TS
+NEST --> NODE
+NEST --> EXPRESS
+PRISMA --> PG
+IOREDIS --> REDIS
+BULL --> REDIS
+OTel --> JAEGER
+OTel --> PROMETHEUS
+GRAFANA --> PROMETHEUS
+LIGHTHOUSE --> GH_ACTIONS
+LHCI --> GH_ACTIONS
+WORKBOX --> NEXT
+PISCINA --> NODE
+
+@enduml

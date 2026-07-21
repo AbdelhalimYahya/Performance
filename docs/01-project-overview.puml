@@ -1,0 +1,63 @@
+@startuml project-overview
+!theme plain
+
+title Frontend & Backend Performance Mastery — Project Overview
+
+skinparam packageStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 12
+skinparam arrowColor #555
+skinparam packageBorderColor #888
+skinparam packageBackgroundColor #F8F8F8
+
+package "Level 01: Fundamentals" as L01 {
+  [Frontend\nWeb Vitals & Profiling] as L01F
+  [Backend\nBenchmarking & Pino] as L01B
+}
+
+package "Level 02: Rendering" as L02 {
+  [Frontend\nSSR vs CSR vs Streaming] as L02F
+  [Backend\nResponse Streaming\nfast-json-stringify] as L02B
+}
+
+package "Level 03: Caching" as L03 {
+  [Frontend\nReact Query + SWR\nService Workers] as L03F
+  [Backend\nRedis Cache-Aside\nHTTP Cache Headers] as L03B
+}
+
+package "Level 04: Database & API" as L04 {
+  [Frontend\nInfinite Scroll\nCursor Pagination\nOptimistic UI] as L04F
+  [Backend\nPrisma + N+1 Detection\nDataLoader + Indexes] as L04B
+}
+
+package "Level 05: Advanced" as L05 {
+  [Frontend\nCode Splitting\nWASM + Tree Shaking] as L05F
+  [Backend\nWorker Threads\nBull Queue + gRPC\nStreams] as L05B
+}
+
+package "Level 06: Production" as L06 {
+  [Frontend\nLighthouse CI\nRUM + CWV Dashboard\nError Boundaries] as L06F
+  [Backend\nOpenTelemetry\nPrometheus + Jaeger\nMemory Leaks + CPU Profiling] as L06B
+}
+
+' Cross-level dependencies
+L01F ..> L02F : builds on
+L02F ..> L03F : builds on
+L03F ..> L04F : builds on
+L04F ..> L05F : builds on
+L05F ..> L06F : builds on
+
+L01B ..> L02B : builds on
+L02B ..> L03B : builds on
+L03B ..> L04B : builds on
+L04B ..> L05B : builds on
+L05B ..> L06B : builds on
+
+L01F ..> L01B : same level
+L02F ..> L02B : same level
+L03F ..> L03B : same level
+L04F ..> L04B : same level
+L05F ..> L05B : same level
+L06F ..> L06B : same level
+
+@enduml
