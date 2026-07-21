@@ -1,0 +1,19 @@
+{
+  "lighthouse": {
+    "performance": 85,
+    "lcp": 2500,
+    "cls": 0.1,
+    "inp": 200,
+    "tbt": 200,
+    "fcp": 1800
+  },
+  "bundle": {
+    "initialKB": 200,
+    "perChunkKB": 100,
+    "totalKB": 900
+  },
+  "images": {
+    "maxSizeKB": 200,
+    "requireWebP": true
+  }
+}

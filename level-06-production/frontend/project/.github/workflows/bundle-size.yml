@@ -1,0 +1,62 @@
+name: Bundle Size Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Check bundle size
+        id: size-limit
+        run: npx size-limit --json > size-limit-results.json
+
+      - name: Post PR comment with results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('size-limit-results.json'));
+
+            let body = '## Bundle Size Report\n\n';
+            body += '| Chunk | Size | Limit | Status |\n';
+            body += '|-------|------|-------|--------|\n';
+
+            let failed = false;
+            for (const result of results) {
+              const sizeKB = (result.size / 1024).toFixed(1);
+              const limitKB = (result.limit / 1024).toFixed(1);
+              const pass = result.size <= result.limit;
+              const status = pass ? '✅ Pass' : '❌ Fail';
+              if (!pass) failed = true;
+              body += `| ${result.name} | ${sizeKB} KB | ${limitKB} KB | ${status} |\n`;
+            }
+
+            body += `\n${failed ? '❌ **Bundle size limit exceeded**' : '✅ All bundles within limits'}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+            if (failed) {
+              core.setFailed('Bundle size limit exceeded');
+            }
