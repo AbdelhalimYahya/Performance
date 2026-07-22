@@ -396,6 +396,6 @@ If you are a beginner looking for your first React tutorial, this is not the rig
 
 **If this repo helped you ship faster code, give it a ⭐ — it helps others find it.**
 
-[Your Name](https://x.com/abdelhaleem175) | [Your LinkedIn](https://www.linkedin.com/in/abdelhalim-yahya-033784335)
+[Abdelhalim Yahya X](https://x.com/abdelhaleem175) | [LinkedIn](https://www.linkedin.com/in/abdelhalim-yahya-033784335)
 
 </div>
